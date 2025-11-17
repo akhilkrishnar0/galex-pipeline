@@ -2,6 +2,7 @@
 
 A clean, modular Python package to automate:
 
+- Download all the GALEX observations of a galaxy
 - Unzipping GALEX tiles
 - Organizing FITS files into FUV/NUV
 - Cropping around galaxy center (RA/DEC)
@@ -15,14 +16,15 @@ A clean, modular Python package to automate:
 Clone the repository:
 
 ```bash
-git clone https://github.com/<your-username>/galex-pipeline.git
+git clone https://github.com/akhilkrishnar0/galex-pipeline.git
 cd galex-pipeline
 
 Install the package:
 
 pip install -e .
-
-Usage Example (Jupyter Notebook or Python)
+```
+## Usage Example (Jupyter Notebook or Python)
+```
 import galex_pipeline as gp
 
 gp.process_galaxy("NGC6902")
@@ -32,7 +34,7 @@ Process multiple galaxies:
 
 gp.process_many(["NGC6902", "NGC1316"])
 
-
+```
 Your GALEX data must be inside:
 
 downloaded_galex/NGC6902/*.gz
