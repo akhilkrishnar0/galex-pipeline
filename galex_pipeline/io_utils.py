@@ -1,41 +1,45 @@
+"""GALEX product pairing and local file organization."""
 from pathlib import Path
-import gzip, shutil
+import gzip
+import re
+import shutil
+
+PRODUCT = re.compile(r"^(?P<tile>.+)-(?P<band>fd|nd)-(?P<kind>intbgsub|int|skybg|rrhr)\.fits(?:\.gz)?$")
 
 
-def unzip_galex_files(folder: Path):
-    for gz_file in folder.glob("*.gz"):
-        output = gz_file.with_suffix("")
-        with gzip.open(gz_file, "rb") as f_in:
-            with open(output, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-        print(f"Unzipped: {gz_file.name}")
-
-
-def organize_fits(folder: Path):
-    for band in ["FUV", "NUV"]:
-        for dtype in ["int", "skybg", "intbgsub"]:
-            (folder / band / dtype).mkdir(parents=True, exist_ok=True)
-
-    for fits_file in folder.glob("*.fits"):
-        name = fits_file.name.lower()
-
-        if "-fd-" in name:
-            band = "FUV"
-        elif "-nd-" in name:
-            band = "NUV"
-        else:
+def unzip_galex_files(folder):
+    for source in Path(folder).glob("*.gz"):
+        if not PRODUCT.match(source.name):
             continue
+        target = source.with_suffix("")
+        temporary = target.with_suffix(".fits.part")
+        try:
+            with gzip.open(source, "rb") as fin, temporary.open("wb") as fout:
+                shutil.copyfileobj(fin, fout)
+            temporary.replace(target)
+        finally:
+            temporary.unlink(missing_ok=True)
 
-        if "intbgsub" in name:
-            dtype = "intbgsub"
-        elif "skybg" in name:
-            dtype = "skybg"
-        elif "int" in name:
-            dtype = "int"
-        else:
-            continue
 
-        dest = folder / band / dtype / fits_file.name
-        shutil.move(str(fits_file), dest)
-        print(f"Moved {fits_file.name} → {band}/{dtype}")
+def organize_fits(folder):
+    folder = Path(folder)
+    for band in ("FUV", "NUV"):
+        for kind in ("int", "rrhr", "skybg", "intbgsub"):
+            (folder / band / kind).mkdir(parents=True, exist_ok=True)
+    for source in folder.glob("*.fits"):
+        match = PRODUCT.match(source.name)
+        if match:
+            band = "FUV" if match['band'] == "fd" else "NUV"
+            source.replace(folder / band / match['kind'] / source.name)
 
+
+def image_pairs(folder, band):
+    """Require an exact observation/band match; never fall back to EXPTIME."""
+    folder = Path(folder)
+    pairs = []
+    for intensity in sorted((folder / band / "int").glob("*-int.fits")):
+        response = folder / band / "rrhr" / intensity.name.replace("-int.fits", "-rrhr.fits")
+        if not response.is_file():
+            raise FileNotFoundError(f"Missing response for {intensity.name}: {response}")
+        pairs.append((intensity, response))
+    return pairs

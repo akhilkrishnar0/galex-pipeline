@@ -2,5 +2,5 @@ astropy
 numpy
 matplotlib
 reproject
-
-
+astroquery
+pandas
