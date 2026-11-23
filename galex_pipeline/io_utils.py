@@ -24,7 +24,7 @@ def unzip_galex_files(folder):
 def organize_fits(folder):
     folder = Path(folder)
     for band in ("FUV", "NUV"):
-        for kind in ("int", "rrhr", "skybg", "intbgsub"):
+        for kind in ("int",  "skybg", "intbgsub"):
             (folder / band / kind).mkdir(parents=True, exist_ok=True)
     for source in folder.glob("*.fits"):
         match = PRODUCT.match(source.name)
