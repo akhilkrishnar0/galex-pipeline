@@ -15,7 +15,10 @@ def process_galaxy(gname, root='downloaded_galex', crop_size=800*u.arcsec):
     organize_fits(folder)
     available = {band: image_pairs(folder, band) for band in ('FUV', 'NUV')}
     if not any(available.values()):
-        raise FileNotFoundError(f'No matched intensity/rrhr data in {folder}')
+        #raise FileNotFoundError(f'No matched intensity/rrhr data in {folder}')
+        if not rrhr_file.exists():
+            print(f"Skipping missing rrhr for {int_file}")
+            rrhr_file = None
     result = {}
     # Pass the current pair list explicitly so old cutouts cannot enter a rerun.
     for band in ('FUV', 'NUV'):
